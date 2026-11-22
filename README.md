@@ -1,60 +1,147 @@
-# ECG-Age — standalone inference source
+# ECG-Age: Morphology-Aware Deep Learning for ECG-Derived Age Estimation
 
-A minimal, self-contained **research-only** command-line implementation for estimating ECG-derived age from a standard 12-lead WFDB electrocardiogram using the frozen morphology-aware CNN–TCN–Transformer architecture.
+**Research software companion** to the manuscript *“Morphology-aware deep learning for ECG-derived age estimation and its association with postoperative outcomes”* (under review).
 
-**This repository publishes inference source code only, not a trained checkpoint.** A separately authorized compatible compact checkpoint is required for actual predictions. This source release does not include clinical datasets, patient predictions, training pipelines, postoperative outcome analysis, or reviewer materials.
+A focused Python implementation of the frozen **CNN–TCN–Transformer** ECG-age inference architecture. It converts a 10-second, 12-lead waveform into a supervised estimate of **ECG-derived age in years**.
 
-## What's included
+> **Release boundary:** This repository contains **inference source code and model configuration only**. It intentionally does **not** include trained weights, patient-level data, the study's model-training pipelines, or postoperative outcome modeling code. A separately authorized compatible checkpoint is needed to generate actual age predictions.
 
-- `src/model.py` — frozen model architecture (3,532,674 trainable parameters)
-- `src/preprocessing.py` — inference preprocessing: mean-centered physical leads and first temporal derivatives
-- `scripts/infer_single.py` — WFDB single-record inference
-- `scripts/validate_standalone.py` — synthetic preprocessing/architecture test; optional local checkpoint CPU forward-pass test
-- `configs/inference.json` — input contract and frozen normalization metadata
-- `requirements.txt` — recorded runtime dependency versions
+[Model documentation](docs/MODEL_CARD.md) · [Inference and reproducibility guide](docs/INFERENCE.md) · [Code and data availability](docs/AVAILABILITY.md)
 
-## Requirements and setup
+---
 
-Python 3.10 is the tested Athena environment. The requirement versions reflect the original environment; installing on a different OS or accelerator may require a compatible PyTorch wheel.
+## Study at a glance
+
+The model was developed using the non-surgical MIMIC-IV-ECG cohort, evaluated in a locked holdout and a separate surgery-linked cohort, and tested without retraining on the independent EchoNext cohort.
+
+| Evaluation population | Participants | Frozen-model MAE | R² |
+| :-- | --: | --: | --: |
+| MIMIC-IV-ECG non-surgical **locked test** | 19,431 | 7.364 years | 0.787 |
+| MIMIC-IV surgery-linked **domain shift** | 58,447 | 7.810 years | 0.613 |
+| **EchoNext** external zero-shot validation | 5,278 | 8.905 years | 0.470 |
+
+These are **manuscript-reported cohort-level results**, not metrics recalculated by this public repository. Training and development partitions contained 68,005 and 9,716 non-surgical participants, respectively. Results should be interpreted in the context of age-dependent prediction bias, domain shift, de-identification, and ascertainment limitations documented in the manuscript.
+
+**ECG-derived age is not a clinically calibrated measure of biological age.** The study also examined statistical associations of ECG age gap with recorded postoperative outcomes; **this repository does not estimate surgical risks or postoperative outcomes**.
+
+## How the model works
+
+```text
+12-lead ECG (10 seconds, 500 Hz)
+        │
+        ▼
+Per-lead mean centering (physical amplitude preserved)
+        │
+        ├── 12 centered ECG channels
+        └── 12 first temporal-difference channels
+        │
+        ▼
+24-channel input [batch, 24, 5000]
+        │
+        ▼
+Input-channel attention
+        │
+        ▼
+Multiscale 1D CNN (kernel sizes 3, 7, 15)
+        │
+        ▼
+Residual dilated TCN (dilations 1, 2, 4, 8, 16)
+        │
+        ▼
+Transformer encoder (6 blocks, width 192, 4 heads)
+        │
+        ▼
+Attention pooling + mean pooling (equal weights)
+        │
+        ▼
+Regression head → normalized age → age in years
+```
+
+The frozen architecture contains **3,532,674 trainable parameters**. The derivative channels are part of the frozen model input, but the manuscript's ablation analyses **did not establish an accuracy benefit from adding them**.
+
+## Quick start
+
+**Prerequisites:** Python 3.10 and a platform-compatible PyTorch installation. The pinned dependencies are recorded in [requirements.txt](requirements.txt); use an isolated environment.
 
 ```bash
 git clone https://github.com/iqram20/ecg-age-postop.git
 cd ecg-age-postop
+python -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
+
+# Does not require model weights or patient ECG data
 python scripts/validate_standalone.py
 ```
 
-The synthetic check does **not** require model weights or patient data.
+The synthetic check reports `PASS_SYNTHETIC_STANDALONE` when its architecture and preprocessing assertions pass. It **does not** assess clinical prediction accuracy.
 
-## Input
+### Single ECG inference
 
-Use an authorized 10-second WFDB record with exactly **12 physical leads** (I, II, III, aVR, aVL, aVF, V1–V6), **500 Hz**, and **5,000 samples**. Both the `.hea` and `.dat` files must be present; pass the record stem without the extension.
-
-The script verifies the lead set and reorders the channels, mean-centers each physical lead **without amplitude normalization**, and concatenates the first time difference for a `[1, 24, 5000]` input. It does **not** resample input signals.
-
-## Run inference (with a locally authorized checkpoint)
+With a **separately approved, compatible** compact checkpoint and an ECG that you are authorized to use:
 
 ```bash
-python scripts/validate_standalone.py \
-  --checkpoint /secure/path/to/ecg_age_frozen_inference.pt
-
 python scripts/infer_single.py \
-  --checkpoint /secure/path/to/ecg_age_frozen_inference.pt \
-  --wfdb-record /secure/path/to/authorized_record \
+  --checkpoint /secure/path/ecg_age_frozen_inference.pt \
+  --wfdb-record /secure/path/to/wfdb_record_stem \
   --device cpu \
   --json
 ```
 
-The output includes the predicted ECG-derived age in years, normalized output, normalizing mean/SD, device, and checkpoint SHA-256. Predictions require **external approved weights** and are not possible from this code alone.
+Specify the WFDB **record stem** (the corresponding `.hea` and `.dat` files must exist). Only a 10-second, 500-Hz, 12-lead record with 5,000 samples is accepted; the standalone CLI does not resample or perform the external-cohort harmonization used in the manuscript.
 
-Frozen inverse normalization: `age_years = model_output * 20.83683569742911 + 55.045702521873395`.
+The JSON contains `predicted_ecg_age_years`, `normalized_model_output`, `age_mean`, `age_std`, `device`, and `checkpoint_sha256`. **No downloadable model weights are provided in this repository.**
 
-## Verification scope
+For exact accepted leads, preprocessing, checkpoint compatibility and interpretation, see the [inference guide](docs/INFERENCE.md).
 
-The source pipeline previously passed synthetic input tests and CPU checkpoint forward testing in its controlled research environment. A previously authorized single-record ECG prediction was deterministic across three CPU runs. Those tests are **functional checks**, not independent reproduction of cohort-wide study metrics on a new installation.
+## Repository contents
 
-## Data protection and model availability
+```text
+ecg-age-postop/
+├── configs/
+│   └── inference.json          # frozen inference settings
+├── docs/
+│   ├── AVAILABILITY.md         # data, weights and code release boundary
+│   ├── INFERENCE.md            # installation, input contract and CLI
+│   └── MODEL_CARD.md           # model purpose, evaluation and limitations
+├── scripts/
+│   ├── infer_single.py         # WFDB single-record prediction
+│   └── validate_standalone.py  # synthetic + optional local checkpoint test
+├── src/
+│   ├── model.py                # CNN–TCN–Transformer definition
+│   └── preprocessing.py        # frozen inference preprocessing
+├── .gitignore
+├── CITATION.cff
+├── README.md
+└── requirements.txt
+```
 
-No model weights, waveform files, identifiable records, cohort manifests, internal analysis scripts, or private manuscript/reviewer files are distributed here. The absence of a checkpoint is intentional. The availability, reuse rights, and possible later distribution of weights are subject to author, institutional, and third-party dataset/weight restrictions. Do **not** commit private patient data or any checkpoint unless separately authorized.
+## Validation and reproducibility boundaries
 
-This research model is not a validated patient-level biological-age measurement and must not be used for diagnosis, treatment, or perioperative decisions.
+In the controlled study environment, the standalone implementation passed synthetic architecture/preprocessing checks, a checkpoint CPU forward pass, real WFDB single-record inference, and a three-run deterministic repeatability check. These are **software function checks** and are **not** a new evaluation of the full manuscript cohorts.
+
+The full manuscript metrics depend on separately governed cohort definitions, authorized source data, frozen predictions, and analysis workflows **not distributed here**. Source availability alone does not establish weight availability or reproduce the published results without the requisite data and approvals.
+
+## Data, checkpoint and publication status
+
+- **MIMIC-IV-ECG/MIMIC-IV:** obtain directly via [PhysioNet](https://physionet.org/) under applicable credentialing and data-use requirements. Data are **not mirrored here**.
+- **EchoNext:** independent external evaluation followed the source dataset's applicable access/use requirements; its harmonization and analysis pipeline are **not** part of this single-record CLI.
+- **Weights:** not distributed. Potential distribution of a compact checkpoint depends on author, institutional and third-party permissions.
+- **Original study repository:** maintained separately and not mirrored by this public source-only repository.
+- **Manuscript:** under review; journal acceptance, final DOI, and publisher-endorsed reproducibility have **not** been claimed.
+
+See [availability details](docs/AVAILABILITY.md) before attempting to redistribute code, data, or weights.
+
+## Citation
+
+For the scientific model, please cite the manuscript **when a definitive publication record is available**. The title is:
+
+> Hussain I., Boyer R., Armoundas A. A., Scarpa J. R. *Morphology-aware deep learning for ECG-derived age estimation and its association with postoperative outcomes.* Manuscript under review.
+
+For repository metadata, see [CITATION.cff](CITATION.cff). Do not invent a journal reference, DOI, or accepted status while review is ongoing.
+
+## License and intended use
+
+**No open-source license is currently granted for this repository.** Public visibility does not, by itself, confer redistribution, modification or commercial-use permission. The authors may add an appropriate license following institutional review.
+
+**Research and educational inspection only. Not a medical device; not for diagnosis, treatment selection, perioperative risk stratification, or individual biological-age interpretation.**
