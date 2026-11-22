@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "For the scientific model, cite the associated manuscript when a definitive published reference is available. For this source repository, use the software citation below."
+type: software
+title: "ECG-Age: Morphology-Aware CNN–TCN–Transformer Standalone Inference Source"
+authors:
+  - family-names: Hussain
+    given-names: Iqram
+repository-code: "https://github.com/iqram20/ecg-age-postop"
+date-released: "2026-11-22"
+abstract: "Source-only research implementation of frozen CNN–TCN–Transformer inference for ECG-derived chronological age estimation. Model weights and study data are not distributed."
+keywords:
+  - electrocardiogram
+  - ECG age
+  - CNN
+  - temporal convolutional network
+  - transformer
+  - deep learning
