@@ -1,0 +1,23 @@
+# Public inference repository - never commit patient or study files
+*.hea
+*.dat
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.pickle
+*.parquet
+*.csv
+*.tsv
+*.out
+*.err
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!*.env.example
+.ipynb_checkpoints/
+.DS_Store
+private_*/
+docs/private_*/
