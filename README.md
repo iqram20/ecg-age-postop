@@ -22,7 +22,13 @@ The model was developed using the non-surgical MIMIC-IV-ECG cohort, evaluated in
 
 These are **manuscript-reported cohort-level results**, not metrics recalculated by this public repository. Training and development partitions contained 68,005 and 9,716 non-surgical participants, respectively. Results should be interpreted in the context of age-dependent prediction bias, domain shift, de-identification, and ascertainment limitations documented in the manuscript.
 
-**ECG-derived age is not a clinically calibrated measure of biological age.** The study also examined statistical associations of ECG age gap with recorded postoperative outcomes; **this repository does not estimate surgical risks or postoperative outcomes**.
+### Clinical relevance and interpretation
+
+ECG-derived age provides a deep learning–based estimate of age-associated cardiovascular characteristics captured by the 12-lead electrocardiogram. The difference between ECG-derived age and chronological age (ECG age gap) may provide complementary information about cardiovascular aging and health status.
+
+In our study, ECG age gap was evaluated for its associations with postoperative clinical outcomes, including mortality, acute kidney injury, ICU outcomes, readmission, and major adverse cardiovascular events. These findings support its potential utility as a prognostic biomarker.
+
+This repository provides the frozen ECG-Age inference framework. The postoperative outcome analyses were conducted separately and are described in the accompanying manuscript. Further prospective validation is warranted before using ECG-derived age for individual clinical decision-making.
 
 ## How the model works
 
