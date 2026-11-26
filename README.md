@@ -24,11 +24,15 @@ These are **manuscript-reported cohort-level results**, not metrics recalculated
 
 ### Clinical relevance and interpretation
 
-ECG-derived age provides a deep learning–based estimate of age-associated cardiovascular characteristics captured by the 12-lead electrocardiogram. The difference between ECG-derived age and chronological age (ECG age gap) may provide complementary information about cardiovascular aging and health status.
+ECG-derived age provides a deep learning–based estimate of age-associated cardiovascular characteristics captured by the 12-lead electrocardiogram. The difference between ECG-derived age and chronological age (ECG AgeGap) is a retrospective ECG phenotype; it is **not** an independently validated measure of biological aging. In the frozen study, greater AgeGap was associated with six *recorded*, surgery-linked outcomes after adjustment for measured clinical factors. These associations are not causal and do not establish prospective risk-prediction utility.
 
-In our study, ECG age gap was evaluated for its associations with postoperative clinical outcomes, including mortality, acute kidney injury, ICU outcomes, readmission, and major adverse cardiovascular events. These findings support its potential utility as a prognostic biomarker.
+**Surgical timing matters:** Among 58,447 surgery-linked participants, 37,075 ECGs were dated strictly before the earliest major-surgery index calendar date, 19,873 were dated on the same day (within-day ordering unavailable), and 1,499 were dated afterward. The manuscript therefore distinguishes the original surgery-linked sample from restricted calendar-date analyses. Recorded 1-year mortality follow-up was not independently complete for every participant, and ICU use was not adjudicated as planned or unplanned.
 
-This repository provides the frozen ECG-Age inference framework. The postoperative outcome analyses were conducted separately and are described in the accompanying manuscript. Further prospective validation is warranted before using ECG-derived age for individual clinical decision-making.
+**Incremental discrimination is small:** In exploratory five-fold out-of-fold clinical-model comparisons on the strictly earlier-index-date subgroup (n = 37,075), the clinical-only AUROC was 0.82586 for recorded 30-day mortality and 0.77912 for recorded 1-year mortality. Adding raw AgeGap gave AUROCs of 0.82650 and 0.78024 (paired ΔAUROC +0.00065 [95% bootstrap CI −0.00149 to +0.00243] and +0.00111 [95% CI +0.00015 to +0.00209], respectively). These fixed-prediction bootstrap intervals do **not** include model-refitting uncertainty, and differences are not evidence of validated clinical utility. No survivors were undersampled to balance mortality classes.
+
+The additional exploratory *surgical-cohort cross-fitted* age residual used for those comparisons is **not** the separate development-frozen residual used elsewhere in the manuscript. The strictly earlier-index cohort (n = 37,075) is also distinct from the manuscript's admission-consistent strictly earlier cohort (n = 37,031). See [study-results interpretation](docs/POSTOPERATIVE_FINDINGS.md).
+
+This repository provides frozen ECG-Age **inference source only**; it does not ship the mortality models, patient-level data, underlying study workflows, or model weights. Prospective independent validation is required before individual clinical use.
 
 ## How the model works
 
