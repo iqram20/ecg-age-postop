@@ -62,9 +62,9 @@ The manuscript notes pronounced **age-dependent bias** in external validation. I
 1. **Age-gap interpretation:** ECG age gap is predicted ECG age minus chronological age; its distribution depends on age and domain. A positive gap is not proof of accelerated biological aging.
 2. **Data constraints:** MIMIC-IV de-identification affects age interpretation, especially in the oldest patients.
 3. **Transportability:** External validation displayed reduced performance and age-dependent bias compared with the internal locked test.
-4. **Surgical chronology and outcomes:** The observational postoperative study used source-defined indicators and timing/ascertainment sensitivity analyses. This repository does not contain clinical prediction models.
+4. **Surgical chronology and outcomes:** Of the 58,447 original surgery-linked ECGs, 37,075 were on strictly earlier calendar days, 19,873 on the same day (within-day order unknown), and 1,499 on later days relative to the earliest major-surgery index. Source-defined mortality follow-up was not certified complete at one year; ICU use was not adjudicated as planned/unplanned. See [postoperative findings](POSTOPERATIVE_FINDINGS.md). The repository does not contain clinical prediction models.
 5. **Signal requirements:** The single-record CLI requires exact leads, duration, and frequency. External EchoNext harmonization is not implemented here.
-6. **Reproducibility boundary:** Running the public synthetic test does not replicate cohort-level results. Model weights, protected waveforms, participant splits, and analysis pipelines are absent.
+6. **Discrimination and interpretation:** Positive adjusted AgeGap–outcome associations do not establish clinical decision utility. Exploratory internal out-of-fold incremental AUROC changes were small, particularly in strictly earlier-date ECGs. Surgical-cohort cross-fitted residual categories are not the manuscript's development-frozen residual classes.\n7. **Reproducibility boundary:** Running the public synthetic test does not replicate cohort-level results. Model weights, protected waveforms, participant splits, and analysis pipelines are absent.
 
 ## Governance
 
